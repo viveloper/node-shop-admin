@@ -1,5 +1,6 @@
 const logger = require('../common/logger');
 const ObjectID = require('bson-objectid');
+const ApiError = require('../errors/ApiError');
 
 const users = [
   {
@@ -33,7 +34,7 @@ const getUser = (req, res, next) => {
   }
 
   const user = users.find((u) => u.id === userId);
-  if (!user) next(new Error('사용자를 찾을 수 없습니다.'));
+  if (!user) next(new ApiError('사용자를 찾을 수 없습니다.'));
 
   res.render('pages/user/edit', { user });
 };
@@ -53,7 +54,7 @@ const createUser = (req, res, next) => {
 const saveUser = (req, res, next) => {
   const userId = req.params.userId;
   const user = users.find((u) => u.id === userId);
-  if (!user) next(new Error('사용자를 찾을 수 없습니다.'));
+  if (!user) next(new ApiError('사용자를 찾을 수 없습니다.'));
 
   logger.info(req.body);
   Object.assign(user, req.body);

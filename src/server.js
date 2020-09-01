@@ -6,6 +6,7 @@ const pino = require('express-pino-logger')({
   logger,
 });
 const { NODE_ENV, APP_ID } = require('./common/config');
+const ApiError = require('./errors/ApiError');
 
 const app = express();
 
@@ -22,8 +23,32 @@ module.exports = class Server {
     app.use(express.urlencoded({ extended: true }));
   }
 
+  static errorHandling(express) {
+    express.use('*', (req, res, next) => {
+      const err = new ApiError('Not found', 404);
+      next(err);
+    });
+    express.use((err, req, res, next) => {
+      logger.error(err);
+      if (err.status && err.status === 404) {
+        res.render('pages/404');
+      } else {
+        res.status(err.status || 500).send({ message: err.message });
+      }
+    });
+  }
+
+  static fileDownloadHandling(express) {
+    express.get('/uploads/:fileName', (req, res) => {
+      const fileName = req.params.fileName;
+      res.sendFile(path.join(__dirname, `../uploads/${fileName}`));
+    });
+  }
+
   router(routes) {
     routes(app);
+    Server.fileDownloadHandling(app);
+    Server.errorHandling(app); // 항상 맨 뒤에 와야합니다.
     return this;
   }
 
